@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>My intervals</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      background-color: #96C9F4;
+    }
+
+    .menu {
+      width: 100%;
+      background-color: #9CDBA6;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+    }
+
+    .menu__list {
+      display: flex;
+      list-style: none;
+      justify-content: space-around;
+      /* border: 20px solid black; */
+    }
+
+    .menu__list__item {
+      text-align: center;
+      height: 30px;
+      padding: 30px;
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .menu__list__item.active {
+      border: 2px solid black;
+    }
+
+    .add__btn {
+      width: 50px;
+      height: 50px;
+      border: 4px solid blue;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      right: 40px;
+      bottom: 90px;
+    }
+
+    .add__btn span {
+      font-size: 26px;
+      color: blue;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <div id="modals">
+      <div id="addModal">
+        <form>
+          <input type="text" placeholder="Enter reminder title">
+          <button>Save</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="reminders">
+
+      <div class="add__btn"><span>+</span></div>
+    </div>
+    <div class="menu">
+      <ul class="menu__list">
+        <li class="menu__list__item">
+          <p>All</p>
+        </li>
+        <li class="menu__list__item active">
+          <p>Today</p>
+        </li>
+        <li class="menu__list__item">
+          <p>Setting</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    const addBtn = document.getElementsByClassName("add__btn")[0];
+    let db;
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('myDatabase', 1);
+
+        request.onupgradeneeded = (event) => {
+          db = event.target.result;
+          const objectStore = db.createObjectStore('myStore', { keyPath: 'id', autoIncrement: true });
+          objectStore.createIndex('name', 'name', { unique: false });
+        };
+
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          console.log('Database opened successfully');
+          resolve(db);
+        };
+
+        request.onerror = (event) => {
+          console.log('Error opening database:', event.target.errorCode);
+          reject(event.target.errorCode);
+        };
+      });
+    }
+
+    function saveData(data) {
+      openDatabase().then((db) => {
+        const transaction = db.transaction(['myStore'], 'readwrite');
+        const objectStore = transaction.objectStore('myStore');
+        const request = objectStore.add(data);
+
+        request.onsuccess = () => {
+          console.log('Data saved successfully');
+        };
+
+        request.onerror = (event) => {
+          console.log('Error saving data:', event.target.errorCode);
+        };
+      });
+    }
+
+    function readData(id) {
+      openDatabase().then((db) => {
+        const transaction = db.transaction(['myStore'], 'readonly');
+        const objectStore = transaction.objectStore('myStore');
+        const request = objectStore.get(id);
+
+        request.onsuccess = (event) => {
+          if (event.target.result) {
+            console.log('Data retrieved successfully:', event.target.result);
+          } else {
+            console.log('No data found with this id');
+          }
+        };
+
+        request.onerror = (event) => {
+          console.log('Error reading data:', event.target.errorCode);
+        };
+      });
+    }
+
+    function updateData(id, newData) {
+      openDatabase().then((db) => {
+        const transaction = db.transaction(['myStore'], 'readwrite');
+        const objectStore = transaction.objectStore('myStore');
+        const request = objectStore.get(id);
+
+        request.onsuccess = (event) => {
+          const data = event.target.result;
+          for (let key in newData) {
+            data[key] = newData[key];
+          }
+          const updateRequest = objectStore.put(data);
+
+          updateRequest.onsuccess = () => {
+            console.log('Data updated successfully');
+          };
+
+          updateRequest.onerror = (event) => {
+            console.log('Error updating data:', event.target.errorCode);
+          };
+        };
+
+        request.onerror = (event) => {
+          console.log('Error retrieving data for update:', event.target.errorCode);
+        };
+      });
+    }
+
+    function deleteData(id) {
+      openDatabase().then((db) => {
+        const transaction = db.transaction(['myStore'], 'readwrite');
+        const objectStore = transaction.objectStore('myStore');
+        const request = objectStore.delete(id);
+
+        request.onsuccess = () => {
+          console.log('Data deleted successfully');
+        };
+
+        request.onerror = (event) => {
+          console.log('Error deleting data:', event.target.errorCode);
+        };
+      });
+    }
+
+    addBtn.addEventListener("click", () => {
+      
+    });
+  </script>
+</body>
+
+</html>
